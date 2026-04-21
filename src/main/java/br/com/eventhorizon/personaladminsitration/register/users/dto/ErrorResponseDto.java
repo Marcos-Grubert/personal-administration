@@ -1,4 +1,10 @@
 package br.com.eventhorizon.personaladminsitration.register.users.dto;
 
-public class ErrorResponseDto {
+import java.time.LocalDateTime;
+
+public record ErrorResponseDto(
+        int status,
+        String message,
+        LocalDateTime timestamp
+) {
 }
