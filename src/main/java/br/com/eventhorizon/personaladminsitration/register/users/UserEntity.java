@@ -4,14 +4,21 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jspecify.annotations.Nullable;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 @NoArgsConstructor
 @Getter
 @Setter
-public class UserEntity {
+public class UserEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "codusu")
@@ -41,10 +48,49 @@ public class UserEntity {
     @Column(name = "datatu")
     private Instant updatedAt;
 
+    //Métodos obrigatórios para implementar UserDetails
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // No mercado, se você não tem tabelas de perfis ainda, retornamos um nível padrão
+        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+
+    @Override
+    public String getUsername() {
+        return this.email; // Define que o login será feito via e-mail
+    }
+
+    @Override
+    public String getPassword() {
+        return this.passwordHash; // Mapeia para o campo de senha criptografada
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return this.active; // Se 'situsu' for false, o Spring bloqueia o login
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
     @PrePersist
     public void prePersist() {
         this.createdAt = Instant.now();
     }
+
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = Instant.now();
