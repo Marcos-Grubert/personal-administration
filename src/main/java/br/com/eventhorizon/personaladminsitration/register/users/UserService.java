@@ -6,6 +6,9 @@ import br.com.eventhorizon.personaladminsitration.register.users.exception.Email
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 public class UserService {
     private final UserRepository userRepository;
@@ -32,5 +35,11 @@ public class UserService {
         UserEntity savedUser = userRepository.save(user);
 
         return userMapper.toResponse(savedUser);
+    }
+
+    public List<UserResponseDto> findAll(){
+        List<UserResponseDto> userResponseDto = new ArrayList<>();
+        userRepository.findAll().forEach(user -> userResponseDto.add(userMapper.toResponse(user)));
+        return userResponseDto;
     }
 }

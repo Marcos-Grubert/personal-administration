@@ -2,10 +2,9 @@ package br.com.eventhorizon.personaladminsitration.register.users;
 
 import br.com.eventhorizon.personaladminsitration.register.users.dto.UserCreateDto;
 import br.com.eventhorizon.personaladminsitration.register.users.dto.UserResponseDto;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
 @RequestMapping("/register/users")
@@ -19,5 +18,11 @@ public class UserController {
     @PostMapping("/createUser")
     public UserResponseDto createUser(@RequestBody UserCreateDto userCreateDto) {
         return userService.create(userCreateDto);
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<UserResponseDto>> findAllUsers(){
+        List<UserResponseDto> userResponseDto = userService.findAll();
+        return ResponseEntity.ok(userResponseDto);
     }
 }
