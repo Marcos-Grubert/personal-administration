@@ -1,7 +1,7 @@
-package br.com.eventhorizon.personaladminsitration.infra.security.exception;
+package br.com.eventhorizon.personaladminsitration.infra.security.advice;
 
+import br.com.eventhorizon.personaladminsitration.commom.exception.EmailAlreadyInUseException;
 import br.com.eventhorizon.personaladminsitration.register.users.dto.ErrorResponseDto;
-import br.com.eventhorizon.personaladminsitration.register.users.exception.EmailAlreadyInUseException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;

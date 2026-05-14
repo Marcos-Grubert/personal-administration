@@ -1,8 +1,8 @@
 package br.com.eventhorizon.personaladminsitration.register.users;
 
+import br.com.eventhorizon.personaladminsitration.commom.exception.EmailAlreadyInUseException;
 import br.com.eventhorizon.personaladminsitration.register.users.dto.UserCreateDto;
 import br.com.eventhorizon.personaladminsitration.register.users.dto.UserResponseDto;
-import br.com.eventhorizon.personaladminsitration.register.users.exception.EmailAlreadyInUseException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
