@@ -1,4 +1,4 @@
-package br.com.eventhorizon.personaladminsitration.commom.exception;
+package br.com.eventhorizon.personaladminsitration.register.users.exception;
 
 public class EmailAlreadyInUseException extends RuntimeException {
     public EmailAlreadyInUseException(String message) {

@@ -1,27 +1,27 @@
-package br.com.eventhorizon.personaladminsitration.register.costumers;
+package br.com.eventhorizon.personaladminsitration.register.custumers;
 
-import br.com.eventhorizon.personaladminsitration.register.costumers.dto.CostumerCreateDto;
-import br.com.eventhorizon.personaladminsitration.register.costumers.dto.CostumerResponseDto;
+import br.com.eventhorizon.personaladminsitration.register.custumers.dto.CustumerCreateDto;
+import br.com.eventhorizon.personaladminsitration.register.custumers.dto.CustumerResponseDto;
 import br.com.eventhorizon.personaladminsitration.register.users.UserEntity;
 import br.com.eventhorizon.personaladminsitration.register.users.dto.UserResponseDto;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CostumerMapper {
-    public CostumerEntity toEntity(CostumerCreateDto costumerCreateDto) {
-        CostumerEntity costumer = new CostumerEntity();
-        costumer.setName(costumerCreateDto.name());
-        costumer.setType(costumerCreateDto.type());
-        costumer.setDocumentCode(costumerCreateDto.documentCode());
-        costumer.setEmail(costumerCreateDto.email());
-        if(costumerCreateDto.situation() != null) {
-            costumer.setSituation(costumerCreateDto.situation());
+public class CustumerMapper {
+    public CustumerEntity toEntity(CustumerCreateDto custumerCreateDto) {
+        CustumerEntity costumer = new CustumerEntity();
+        costumer.setName(custumerCreateDto.name());
+        costumer.setType(custumerCreateDto.type());
+        costumer.setDocumentCode(custumerCreateDto.documentCode());
+        costumer.setEmail(custumerCreateDto.email());
+        if(custumerCreateDto.situation() != null) {
+            costumer.setSituation(custumerCreateDto.situation());
         }
         return costumer;
     }
 
-    public CostumerResponseDto toResponse(CostumerEntity costumer) {
-        return new CostumerResponseDto(
+    public CustumerResponseDto toResponse(CustumerEntity costumer) {
+        return new CustumerResponseDto(
                 costumer.getId(),
                 costumer.getName(),
                 costumer.getType(),

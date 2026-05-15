@@ -1,6 +1,7 @@
 package br.com.eventhorizon.personaladminsitration.infra.security.advice;
 
-import br.com.eventhorizon.personaladminsitration.commom.exception.EmailAlreadyInUseException;
+import br.com.eventhorizon.personaladminsitration.commom.exception.BusinessException;
+import br.com.eventhorizon.personaladminsitration.register.custumers.exception.ResourceNotFoundException;
 import br.com.eventhorizon.personaladminsitration.register.users.dto.ErrorResponseDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,8 +14,8 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(EmailAlreadyInUseException.class)
-    public ResponseEntity<ErrorResponseDto> handleEmailAlreadyInUseException(EmailAlreadyInUseException ex){
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponseDto> handleEmailAlreadyInUseException(BusinessException ex){
         ErrorResponseDto error = new ErrorResponseDto(
                 HttpStatus.CONFLICT.value(),
                 ex.getMessage(),
@@ -32,5 +33,15 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleResourceNotFound(ResourceNotFoundException ex) {
+        ErrorResponseDto error = new ErrorResponseDto(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
     }
 }

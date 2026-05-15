@@ -1,8 +1,8 @@
-package br.com.eventhorizon.personaladminsitration.register.costumers.dto;
+package br.com.eventhorizon.personaladminsitration.register.custumers.dto;
 
 import br.com.eventhorizon.personaladminsitration.enums.PersonType;
 
-public record CostumerCreateDto(
+public record CustumerUpdateDto(
         String name,
         PersonType type,
         String documentCode,
