@@ -1,11 +1,11 @@
-package br.com.eventhorizon.personaladminsitration.register.custumers.dto;
+package br.com.eventhorizon.personaladminsitration.register.customers.dto;
 
-import br.com.eventhorizon.personaladminsitration.enums.PersonType;
+import br.com.eventhorizon.personaladminsitration.register.enums.PersonType;
 import br.com.eventhorizon.personaladminsitration.register.users.dto.UserResponseDto;
 
 import java.time.Instant;
 
-public record CustumerResponseDto(
+public record CustomerResponseDto(
         Long id,
         String name,
         PersonType type,

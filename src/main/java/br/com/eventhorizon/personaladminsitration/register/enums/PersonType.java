@@ -1,4 +1,4 @@
-package br.com.eventhorizon.personaladminsitration.enums;
+package br.com.eventhorizon.personaladminsitration.register.enums;
 
 public enum PersonType {
     INDIVIDUAL ("F", "Física"),

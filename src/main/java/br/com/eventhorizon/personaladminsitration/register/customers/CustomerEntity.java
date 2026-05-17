@@ -1,6 +1,6 @@
-package br.com.eventhorizon.personaladminsitration.register.custumers;
+package br.com.eventhorizon.personaladminsitration.register.customers;
 
-import br.com.eventhorizon.personaladminsitration.enums.PersonType;
+import br.com.eventhorizon.personaladminsitration.register.enums.PersonType;
 import br.com.eventhorizon.personaladminsitration.register.users.UserEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -13,10 +13,10 @@ import java.time.Instant;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "custumers")
+@Table(name = "customers")
 @Getter
 @Setter
-public class CustumerEntity {
+public class CustomerEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "codcli")
