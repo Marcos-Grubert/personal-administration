@@ -12,7 +12,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ReceivableId implements Serializable {
-    @Column(name = "codcli")
+    @Column(name = "codcli", nullable = false)
     private Long customerId;
 
     @Column(name = "numtit", nullable = false, length = 120)
