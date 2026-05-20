@@ -2,6 +2,7 @@ package br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.
 
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableCreateDto;
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableResponseDto;
+import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableUpdateDto;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -28,5 +29,15 @@ public class ReceivableController {
         ReceivableId receivableId =  new ReceivableId(customer, document);
         ReceivableResponseDto receivableResponseDto = receivableService.findById(receivableId);
         return ResponseEntity.status(HttpStatus.OK).body(receivableResponseDto);
+    }
+
+    @PutMapping("/{customer}/{document}")
+    public ResponseEntity<ReceivableResponseDto> update(
+            @PathVariable Long customer,
+            @PathVariable String document,
+            @RequestBody @Valid ReceivableUpdateDto receivableUpdateDto) {
+        ReceivableId receivableId =  new ReceivableId(customer, document);
+        ReceivableResponseDto responseDto = receivableService.update(receivableId, receivableUpdateDto);
+        return ResponseEntity.status(HttpStatus.OK).body(responseDto);
     }
 }

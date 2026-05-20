@@ -1,7 +1,7 @@
 package br.com.eventhorizon.personaladminsitration.shared.exception;
 
-public abstract class BusinessException extends RuntimeException {
-    protected BusinessException(String message) {
+public class BusinessException extends RuntimeException {
+    public BusinessException(String message) {
         super(message);
     }
 }

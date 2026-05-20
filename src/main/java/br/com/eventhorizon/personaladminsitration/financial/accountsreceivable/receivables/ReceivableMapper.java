@@ -18,7 +18,7 @@ public class ReceivableMapper {
         receivableEntity.setId(id);
         receivableEntity.setDestit(receivableCreateDto.destit());
         receivableEntity.setOriginalValue(receivableCreateDto.originalValue());
-        receivableEntity.setFinancialStatus(receivableCreateDto.financialStatus());
+        receivableEntity.setOriginalDueDate(receivableCreateDto.originalDueDate());
 
         return receivableEntity;
     }

@@ -3,10 +3,7 @@ package br.com.eventhorizon.personaladminsitration.financial.enums;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum FinancialStatus {
-    INDEFINIDO1(0),
     ABERTO(1),
-    ABERTO_PARCIAL(2),
-    INDEFINIDO2(3),
     LIQUIDADO(4),
     CANCELADO(5);
 

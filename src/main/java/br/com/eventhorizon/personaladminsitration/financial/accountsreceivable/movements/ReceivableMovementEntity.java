@@ -1,21 +1,20 @@
 package br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.movements;
 
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.ReceivableEntity;
-import br.com.eventhorizon.personaladminsitration.financial.enums.FinancialStatus;
 import br.com.eventhorizon.personaladminsitration.financial.enums.MovementType;
 import br.com.eventhorizon.personaladminsitration.register.users.UserEntity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedBy;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "receivable_movements")
@@ -23,12 +22,15 @@ import java.time.Instant;
 @NoArgsConstructor
 @Getter
 @Setter
+@DynamicUpdate
 public class ReceivableMovementEntity {
+    @Version
+    private Long version;
 
     @EmbeddedId
     private ReceivableMovementId id;
 
-    @MapsId("receivableId")
+    @MapsId("receivable")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumns({
             @JoinColumn(name = "codcli", referencedColumnName = "codcli"),
@@ -49,6 +51,15 @@ public class ReceivableMovementEntity {
     @Column(name = "tipmov", nullable = false)
     private MovementType movementType;
 
+    @Column(name = "vctant")
+    private LocalDate previousDueDate;
+
+    @Column(name = "vctatu")
+    private LocalDate nextDueDate;
+
+    @Column(name = "datmov", nullable = false)
+    private Instant movementInstant;
+
     @Column(name = "obsmov", length = 500)
     private String movementObservation;
 
@@ -60,13 +71,4 @@ public class ReceivableMovementEntity {
     @CreatedDate
     @Column(name = "datger", nullable = false, updatable = false)
     private Instant createdAt;
-
-    @LastModifiedBy
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuatu", referencedColumnName = "codusu")
-    private UserEntity lastModifiedBy;
-
-    @LastModifiedDate
-    @Column(name = "datatu")
-    private Instant lastModifiedAt;
 }
