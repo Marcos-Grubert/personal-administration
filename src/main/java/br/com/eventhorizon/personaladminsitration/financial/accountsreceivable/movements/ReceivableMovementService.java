@@ -2,61 +2,220 @@ package br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.
 
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.movements.dto.ReceivableMovementCreateDto;
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.movements.dto.ReceivableMovementResponseDto;
-import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.movements.dto.ReceivableMovementUpdateDto;
+import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.ReceivableEntity;
+import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.ReceivableId;
+import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.ReceivableRepository;
+import br.com.eventhorizon.personaladminsitration.financial.enums.FinancialStatus;
 import br.com.eventhorizon.personaladminsitration.financial.enums.MovementType;
-import br.com.eventhorizon.personaladminsitration.shared.exception.ResourceNotFoundException;
+import br.com.eventhorizon.personaladminsitration.shared.exception.BusinessException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+
 @Service
 public class ReceivableMovementService {
+
     private final ReceivableMovementRepository receivableMovementRepository;
     private final ReceivableMovementMapper receivableMovementMapper;
+    private final ReceivableRepository receivableRepository;
 
-    public ReceivableMovementService(ReceivableMovementRepository receivableMovementRepository, ReceivableMovementMapper receivableMovementMapper) {
+    public ReceivableMovementService(ReceivableMovementRepository receivableMovementRepository,
+                                     ReceivableMovementMapper receivableMovementMapper,
+                                     ReceivableRepository receivableRepository) {
         this.receivableMovementRepository = receivableMovementRepository;
         this.receivableMovementMapper = receivableMovementMapper;
+        this.receivableRepository = receivableRepository;
     }
 
     @Transactional
-    public ReceivableMovementResponseDto create(ReceivableMovementCreateDto receivableMovementCreateDtoCreateDto) {
+    public ReceivableMovementResponseDto create(ReceivableMovementCreateDto receivableMovementCreateDto) {
 
-        ReceivableMovementEntity receivableMovementEntity = receivableMovementMapper.toEntity(receivableMovementCreateDtoCreateDto);
-        Integer lastSequence = receivableMovementRepository.findMaxSequence(
-                receivableMovementEntity
-                        .getId()
-                        .getReceivableId()
-                        .getCustomerId(),
-                receivableMovementEntity.getId()
-                        .getReceivableId()
-                        .getDocument());
-        Integer nextSequence = lastSequence + 1;
-
-        receivableMovementEntity.getId().setSequenceMovement(nextSequence);
-
-        ReceivableMovementEntity savedEntity = receivableMovementRepository.save(receivableMovementEntity);
-        return receivableMovementMapper.toResponseDto(savedEntity);
-    }
-
-    /*@Transactional
-    public ReceivableMovementResponseDto update(ReceivableMovementUpdateDto receivableMovementUpdateDto) {
-
-        if(receivableMovementUpdateDto.movementType() == null) {
-            return  null;
+        //Consistências gerais
+        if(receivableMovementCreateDto.movementValue() == null) {
+            throw new BusinessException("Valor do movimento indefinido.");
         }
 
+        if(receivableMovementCreateDto.movementType() == null) {
+            throw new BusinessException("Movimento indefinido.");
+        }
 
-        //Alteração de inclusão
-        if(receivableMovementUpdateDto.movementType() == MovementType.INCLUSAO){
-            ReceivableMovementEntity receivableMovementEntity = receivableMovementRepository
-                    .findById(receivableMovementUpdateDto.receivableMovementId())
-                    .orElseThrow(() -> new ResourceNotFoundException("O movimento informado não existe."));
+        if(receivableMovementCreateDto.movementValue().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("O valor do movimento não pode ser menor ou igual a zero");
+        }
 
-            if(receivableMovementEntity.getMovementType() != MovementType.INCLUSAO) {
-                new Res
+        if(receivableMovementCreateDto.interestValue().compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("O valor de juros não pode ser menor que zero");
+        }
+
+        ReceivableId receivableId = new ReceivableId(receivableMovementCreateDto.customerId(),receivableMovementCreateDto.document());
+        ReceivableEntity receivableEntity = receivableRepository.findById(receivableId)
+                .orElseThrow(() -> new EntityNotFoundException("Título não encontrado"));
+
+        //Consiste movimento por inclusão de título
+        if(receivableMovementCreateDto.movementType() == MovementType.INCLUSAO){
+
+            Integer lastSequence = findLastSequence(receivableId);
+            Integer nextSequence = lastSequence + 1;
+            ReceivableMovementEntity receivableMovementEntity = receivableMovementMapper.toEntity(receivableMovementCreateDto);
+
+            receivableMovementEntity.getId().setSequenceMovement(nextSequence);
+
+            ReceivableMovementEntity savedEntity = receivableMovementRepository.save(receivableMovementEntity);
+            return receivableMovementMapper.toResponseDto(savedEntity);
+        }
+
+        //Consiste movimentos do tipo baixa
+        if(receivableMovementCreateDto.movementType() == MovementType.BAIXA){
+
+            //Baixa completa
+            if(receivableEntity.getRemainingValue().compareTo(receivableMovementCreateDto.movementValue()) == 0){
+                receivableEntity.setRemainingValue(BigDecimal.ZERO);
+                receivableEntity.setFinancialStatus(FinancialStatus.LIQUIDADO);
+                receivableRepository.save(receivableEntity);
+
+                ReceivableMovementEntity receivableMovementEntity = receivableMovementMapper.toEntity(receivableMovementCreateDto);
+                Integer lastSequence = findLastSequence(receivableId);
+                Integer nextSequence = lastSequence + 1;
+                receivableMovementEntity.getId().setSequenceMovement(nextSequence);
+                ReceivableMovementEntity savedEntity = receivableMovementRepository.save(receivableMovementEntity);
+                return receivableMovementMapper.toResponseDto(savedEntity);
+            }
+
+            //Baixa parcial
+            if(receivableEntity.getRemainingValue().compareTo(receivableMovementCreateDto.movementValue()) == -1){
+                throw new BusinessException("O valor do movimento não pode ser maior que o valor do título");
+            }
+            if(receivableEntity.getRemainingValue().compareTo(receivableMovementCreateDto.movementValue()) == 1){
+
+                BigDecimal remainingValue = calculateRemainingValue(receivableMovementCreateDto);
+                BigDecimal newRemainingValue;
+
+                if(remainingValue.compareTo(BigDecimal.ZERO) <= 0){
+                    newRemainingValue = receivableEntity.getRemainingValue();
+                } else {
+                    newRemainingValue = receivableEntity.getRemainingValue().subtract(remainingValue);
+                }
+
+                receivableEntity.setRemainingValue(newRemainingValue);
+                receivableRepository.save(receivableEntity);
+
+                ReceivableMovementEntity receivableMovementEntity =  receivableMovementMapper.toEntity(receivableMovementCreateDto);
+                receivableMovementEntity.setMovementType(MovementType.BAIXA);
+                Integer lastSequence = findLastSequence(receivableId);
+                Integer nextSequence = lastSequence + 1;
+                receivableMovementEntity.getId().setSequenceMovement(nextSequence);
+                ReceivableMovementEntity savedEntity = receivableMovementRepository.save(receivableMovementEntity);
+                return receivableMovementMapper.toResponseDto(savedEntity);
             }
         }
 
+        //Baixa por estorno
+        if(receivableMovementCreateDto.movementType() == MovementType.ESTORNO){
+            Integer lastSequence = findLastSequence(receivableId);
+            ReceivableMovementId receivableMovementId = new ReceivableMovementId(receivableId,lastSequence);
+            ReceivableMovementEntity receivableMovementEntity = receivableMovementRepository.findById(receivableMovementId)
+                    .orElseThrow(() -> new EntityNotFoundException("Movimento não encontrado"));
 
-    }*/
+            if(receivableMovementEntity.getMovementType().equals(MovementType.ESTORNO)){
+                throw new BusinessException("Ultimo movimento já é de ESTORNO.");
+            }
+
+            //estorna baixa
+            if(receivableMovementEntity.getMovementType().equals(MovementType.BAIXA)){
+                BigDecimal previousMovementValue = receivableMovementEntity.getMovementValue();
+                receivableEntity.setRemainingValue(previousMovementValue);
+                receivableEntity.setFinancialStatus(FinancialStatus.ABERTO);
+                receivableRepository.save(receivableEntity);
+
+                ReceivableMovementEntity receivableMovementEntityToReverse = receivableMovementMapper.toEntity(receivableMovementCreateDto);
+                receivableMovementEntityToReverse.setMovementType(MovementType.ESTORNO);
+                receivableMovementEntityToReverse.setMovementValue(previousMovementValue);
+                receivableMovementEntityToReverse.getId().setSequenceMovement(lastSequence + 1);
+                receivableMovementRepository.save(receivableMovementEntityToReverse);
+                return receivableMovementMapper.toResponseDto(receivableMovementEntityToReverse);
+
+            }
+
+            //estorna cancelamento
+            if(receivableMovementEntity.getMovementType().equals(MovementType.CANCELAMENTO)){
+                BigDecimal previousMovementValue = receivableMovementEntity.getMovementValue();
+                BigDecimal remainingValue = receivableEntity.getRemainingValue();
+                BigDecimal originalValue = receivableEntity.getOriginalValue();
+                BigDecimal newRemainingValue;
+                if(previousMovementValue.add(remainingValue).compareTo(originalValue) == 1){
+                    newRemainingValue = originalValue;
+                } else {
+                    newRemainingValue = remainingValue.add(remainingValue);
+                }
+                receivableEntity.setRemainingValue(newRemainingValue);
+                receivableEntity.setFinancialStatus(FinancialStatus.ABERTO);
+                receivableRepository.save(receivableEntity);
+
+                ReceivableMovementEntity receivableMovementEntityToReverse = receivableMovementMapper.toEntity(receivableMovementCreateDto);
+                receivableMovementEntityToReverse.setMovementType(MovementType.ESTORNO);
+                receivableMovementEntityToReverse.setMovementValue(newRemainingValue);
+                receivableMovementEntityToReverse.getId().setSequenceMovement(lastSequence + 1);
+                ReceivableMovementEntity savedEntity = receivableMovementRepository.save(receivableMovementEntityToReverse);
+                return receivableMovementMapper.toResponseDto(savedEntity);
+            }
+        }
+
+        //Baixa por cancelamento
+        if(receivableMovementCreateDto.movementType() == MovementType.CANCELAMENTO){
+            if(receivableEntity.getRemainingValue().subtract(receivableMovementCreateDto.movementValue()).compareTo(BigDecimal.ZERO) < 0){
+                throw new BusinessException("O valor do movimento para cancelamento não pode ser maior que o valor em aberto do título");
+            }
+
+            BigDecimal diferenceValue = receivableEntity.getRemainingValue().subtract(receivableMovementCreateDto.movementValue());
+
+            if(receivableMovementCreateDto.movementValue().compareTo(receivableEntity.getRemainingValue()) > 0){
+                throw new BusinessException("O valor do movimento "+receivableMovementCreateDto.movementValue()+" não pode ser superior ao valor em aberto no titulo" + receivableEntity.getRemainingValue());
+            }
+
+            //se a diferença de valores entre saldo em aberto e valor original do titulo é zero, cancela o titulo
+            if (diferenceValue.equals(receivableEntity.getOriginalValue())){
+                if(receivableEntity.getRemainingValue().subtract(receivableMovementCreateDto.movementValue()).compareTo(BigDecimal.ZERO) == 0){
+                    receivableEntity.setRemainingValue(BigDecimal.ZERO);
+                    receivableEntity.setFinancialStatus(FinancialStatus.CANCELADO);
+                }
+            }
+
+            if(diferenceValue.compareTo(BigDecimal.ZERO) == 0 && receivableEntity.getOriginalValue().compareTo(receivableEntity.getRemainingValue()) > 0){
+                receivableEntity.setRemainingValue(BigDecimal.ZERO);
+                receivableEntity.setFinancialStatus(FinancialStatus.LIQUIDADO);
+            }
+
+            if(diferenceValue.compareTo(BigDecimal.ZERO) > 0 && diferenceValue.compareTo(receivableEntity.getRemainingValue()) < 0){
+                BigDecimal remainingValue = receivableEntity.getRemainingValue().subtract(receivableMovementCreateDto.movementValue());
+                receivableEntity.setRemainingValue(remainingValue);
+                receivableEntity.setFinancialStatus(FinancialStatus.ABERTO);
+            }
+
+            receivableRepository.save(receivableEntity);
+
+            ReceivableMovementEntity receivableMovementEntity = receivableMovementMapper.toEntity(receivableMovementCreateDto);
+            Integer lastSequence = findLastSequence(receivableId);
+            Integer nextSequence = lastSequence + 1;
+            receivableMovementEntity.getId().setSequenceMovement(nextSequence);
+            ReceivableMovementEntity savedEntity = receivableMovementRepository.save(receivableMovementEntity);
+            return receivableMovementMapper.toResponseDto(savedEntity);
+        }
+
+        throw new BusinessException("Operação não mapeada.");
+    }
+
+    private Integer findLastSequence(ReceivableId receivableId){
+        Integer lastSequence = receivableMovementRepository.findMaxSequence(receivableId.getCustomerId(), receivableId.getDocument());
+        return lastSequence == null ? 0 : lastSequence;
+    }
+
+    private BigDecimal calculateRemainingValue(ReceivableMovementCreateDto receivableMovementCreateDto){
+        BigDecimal movement = receivableMovementCreateDto.movementValue();
+        BigDecimal interest = receivableMovementCreateDto.interestValue() != null ? receivableMovementCreateDto.interestValue() : BigDecimal.ZERO;
+        BigDecimal discount = receivableMovementCreateDto.discountValue() != null ? receivableMovementCreateDto.discountValue() : BigDecimal.ZERO;
+
+        return movement.add(interest).subtract(discount);
+    }
 }

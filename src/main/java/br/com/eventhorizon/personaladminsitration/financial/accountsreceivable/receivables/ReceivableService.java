@@ -47,7 +47,7 @@ public class ReceivableService {
         movementEntity.setId(movementId);
 
         movementEntity.setReceivable(savedEntity);
-        movementEntity.setMovementValue(savedEntity.getOriginalValue());
+        movementEntity.setMovementValue(BigDecimal.ZERO);
         movementEntity.setInterestValue(BigDecimal.ZERO);
         movementEntity.setDiscountValue(BigDecimal.ZERO);
         movementEntity.setMovementType(MovementType.INCLUSAO);
@@ -85,7 +85,7 @@ public class ReceivableService {
             ReceivableMovementId receivableMovementId = new ReceivableMovementId(receivableEntity.getId(),1);
             ReceivableMovementEntity receivableMovementEntity = receivableMovementRepository.findById(receivableMovementId)
                     .orElseThrow(() -> new EntityNotFoundException("Movimento não encontrado."));
-            receivableMovementEntity.setMovementValue(receivableUpdateDto.originalValue());
+            receivableMovementEntity.setMovementValue(BigDecimal.ZERO);
             receivableMovementEntity.setMovementInstant(Instant.now());
 
             //Não é necessário informar .save ao alterar registros devido o dirtycheck do hibernate, se identificar que tem alterações entre o banco e a memoria ele vai la no banco e grava a informação, portanto a alteração fica implicita no codigo

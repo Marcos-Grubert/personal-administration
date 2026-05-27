@@ -1,9 +1,9 @@
 package br.com.eventhorizon.personaladminsitration.infra.security.advice;
-
 import br.com.eventhorizon.personaladminsitration.register.users.dto.ErrorResponseDto;
 import br.com.eventhorizon.personaladminsitration.shared.exception.BusinessException;
 import br.com.eventhorizon.personaladminsitration.shared.exception.ResourceAlreadyExistsException;
 import br.com.eventhorizon.personaladminsitration.shared.exception.ResourceNotFoundException;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,16 +17,6 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-
-    /*@ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ErrorResponseDto> handleEmailAlreadyInUseException(BusinessException ex){
-        ErrorResponseDto error = new ErrorResponseDto(
-                HttpStatus.CONFLICT.value(),
-                ex.getMessage(),
-                LocalDateTime.now()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
-    }*/
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponseDto> handle401() {
@@ -86,10 +76,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponseDto> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         ErrorResponseDto error = new ErrorResponseDto(
-                HttpStatus.CONFLICT.value(),
-                "Não é possível excluir o registro devido referências em outras tabelas.",
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
                 LocalDateTime.now()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleEntityNotFound(EntityNotFoundException ex) {
+        ErrorResponseDto error = new ErrorResponseDto(
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ErrorResponseDto> handleBusinessException(BusinessException ex) {
+        ErrorResponseDto error = new ErrorResponseDto(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                LocalDateTime.now()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
 }

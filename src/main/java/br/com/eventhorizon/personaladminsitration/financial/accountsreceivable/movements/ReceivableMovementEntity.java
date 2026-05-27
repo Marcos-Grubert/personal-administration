@@ -57,6 +57,7 @@ public class ReceivableMovementEntity {
     @Column(name = "vctatu")
     private LocalDate nextDueDate;
 
+    @CreatedDate
     @Column(name = "datmov", nullable = false)
     private Instant movementInstant;
 
