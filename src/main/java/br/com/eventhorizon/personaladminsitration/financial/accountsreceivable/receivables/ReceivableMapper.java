@@ -1,6 +1,7 @@
 package br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables;
 
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableCreateDto;
+import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivablePendingCollectionDto;
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableResponseDto;
 import br.com.eventhorizon.personaladminsitration.register.users.UserEntity;
 import br.com.eventhorizon.personaladminsitration.register.users.dto.UserResponseDto;
@@ -31,6 +32,22 @@ public class ReceivableMapper {
                 receivableEntity.getFinancialStatus(),
                 mapUser(receivableEntity.getCreatedBy()),
                 receivableEntity.getCreatedAt()
+        );
+    }
+
+    public ReceivablePendingCollectionDto toPendingCollectionDto(ReceivableEntity entity) {
+        if (entity == null) return null;
+
+        return new ReceivablePendingCollectionDto(
+                entity.getId(),
+                entity.getCustomer().getName(),
+                entity.getOriginalValue(),
+                entity.getRemainingValue(),
+                entity.getDestit(),
+                entity.getFinancialStatus(),
+                entity.getOriginalDueDate(),
+                mapUser(entity.getCreatedBy()),
+                entity.getCreatedAt()
         );
     }
 

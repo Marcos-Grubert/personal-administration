@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum FinancialStatus {
     ABERTO(1),
+    ABERTO_PARCIAL(2),
     LIQUIDADO(4),
     CANCELADO(5);
 

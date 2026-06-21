@@ -27,7 +27,7 @@ public record ReceivableCreateDto(
 
         @NotNull(message = "Obrigatório o preenchimento da data de vencimento.")
         @FutureOrPresent(message = "A data de vencimento não pode ser anterior à data de hoje")
-        @JsonFormat(pattern = "dd/MM/yyyy")
+        @JsonFormat(pattern = "yyyy-MM-dd")
         LocalDate originalDueDate
 ) {
 }

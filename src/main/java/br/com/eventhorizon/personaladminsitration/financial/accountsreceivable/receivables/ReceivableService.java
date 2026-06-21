@@ -4,6 +4,7 @@ import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.m
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.movements.ReceivableMovementId;
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.movements.ReceivableMovementRepository;
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableCreateDto;
+import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivablePendingCollectionDto;
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableResponseDto;
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableUpdateDto;
 import br.com.eventhorizon.personaladminsitration.financial.enums.FinancialStatus;
@@ -12,11 +13,15 @@ import br.com.eventhorizon.personaladminsitration.shared.exception.BusinessExcep
 import br.com.eventhorizon.personaladminsitration.shared.exception.ResourceAlreadyExistsException;
 import br.com.eventhorizon.personaladminsitration.shared.exception.ResourceNotFoundException;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class ReceivableService {
@@ -64,6 +69,27 @@ public class ReceivableService {
         return receivableRepository.findById(receivableId)
                 .map(receivableMapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("O título informado não foi encontrado."));
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ReceivablePendingCollectionDto> findPendingReceivables(Long customerId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        if(startDate == null){
+            startDate = LocalDate.now().minusDays(30);
+        }
+        if(endDate == null){
+            endDate = LocalDate.now().plusDays(30);
+        }
+
+        List<FinancialStatus> targetStatuses = List.of(FinancialStatus.ABERTO,FinancialStatus.ABERTO_PARCIAL);
+
+        Page<ReceivableEntity> entitiesPage = receivableRepository.findPendingReceivablesByDueDateInterval(
+                targetStatuses,
+                customerId,
+                startDate,
+                endDate,
+                pageable
+        );
+        return entitiesPage.map(receivableMapper::toPendingCollectionDto);
     }
 
     @Transactional

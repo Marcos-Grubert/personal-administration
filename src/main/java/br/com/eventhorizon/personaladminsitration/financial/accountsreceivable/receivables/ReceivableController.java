@@ -1,12 +1,19 @@
 package br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables;
 
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableCreateDto;
+import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivablePendingCollectionDto;
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableResponseDto;
 import br.com.eventhorizon.personaladminsitration.financial.accountsreceivable.receivables.dto.ReceivableUpdateDto;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/financial/receivables")
@@ -29,6 +36,17 @@ public class ReceivableController {
         ReceivableId receivableId =  new ReceivableId(customer, document);
         ReceivableResponseDto receivableResponseDto = receivableService.findById(receivableId);
         return ResponseEntity.status(HttpStatus.OK).body(receivableResponseDto);
+    }
+
+    @GetMapping("/pendding-collections")
+    public ResponseEntity<Page<ReceivablePendingCollectionDto>> getPenddingCollections(
+            @RequestParam(required = false) Long customerId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate endDate,
+            @PageableDefault(size = 10, sort = "originalDueDate") Pageable pageable
+            ) {
+        Page<ReceivablePendingCollectionDto> response = receivableService.findPendingReceivables(customerId, startDate, endDate, pageable);
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
     @PutMapping("/{customer}/{document}")
